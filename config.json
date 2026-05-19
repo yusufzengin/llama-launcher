@@ -1,0 +1,201 @@
+{
+  "defaults": {
+    "host": "0.0.0.0",
+    "port": "8080",
+    "threads": "14"
+  },
+
+  "common": [
+    "--fit", "off",
+    "--no-mmap",
+    "--mlock",
+    "-fitt", "512"
+  ],
+
+  "runtimes": {
+    "Stable": "%LLAMA_BIN_STABLE%",
+    "Latest": "%LLAMA_BIN_LATEST%"
+  },
+
+  "profiles": [
+    {
+      "name": "Qwen 27B 180k",
+      "executable": "llama-server.exe",
+      "tags": ["reasoning", "coding", "long-context"],
+      "notes": [
+        "Dense model — no MOE",
+        "MTP variant uses --spec-type draft-mtp",
+        "mmproj currently incompatible with MTP — disable vision when using MTP"
+      ],
+      "models": {
+        "lmstudio Q4_K_M": {
+          "model":  "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf",
+          "mmproj": "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-27B-GGUF/mmproj-Qwen3.6-27B-BF16.gguf",
+          "mtp": false
+        },
+        "unsloth Q5_K_XL": {
+          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-Q5_K_XL.gguf",
+          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-GGUF/mmproj-F32.gguf",
+          "mtp": false
+        },
+        "unsloth MTP Q4_K_M": {
+          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-Q4_K_M.gguf",
+          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
+          "mtp": true,
+          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
+        }
+      },
+      "tunables": {
+        "ctx":    "180000",
+        "batch":  "512",
+        "ubatch": "512",
+        "mmproj": true
+      },
+      "fixed": [
+        "-ngl", "99",
+        "--flash-attn", "on",
+        "--jinja",
+        "--cache-type-k", "q8_0", "--cache-type-v", "q8_0",
+        "--presence-penalty", "0",
+        "--repeat-penalty", "1",
+        "--temperature", "0.6",
+        "--top-p", "0.95", "--top-k", "20", "--min-p", "0.05",
+        "--log-colors", "on",
+        "--chat-template-kwargs", "{\"preserve-thinking\":true}"
+      ]
+    },
+
+    {
+      "name": "Qwen 35B 262k MOE",
+      "executable": "llama-server.exe",
+      "tags": ["reasoning", "coding", "long-context", "moe"],
+      "notes": [
+        "MOE model — n-cpu-moe offloads MOE layers to CPU",
+        "MTP variant uses --spec-type draft-mtp",
+        "mmproj currently incompatible with MTP — disable vision when using MTP"
+      ],
+      "models": {
+        "lmstudio Q4_K_M": {
+          "model":  "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-Q4_K_M.gguf",
+          "mmproj": "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-35B-A3B-GGUF/mmproj-Qwen3.6-35B-A3B-BF16.gguf",
+          "mtp": false
+        },
+        "unsloth MTP Q6_K": {
+          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/Qwen3.6-35B-A3B-UD-Q6_K.gguf",
+          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/mmproj-F32.gguf",
+          "mtp": true,
+          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
+        }
+      },
+      "tunables": {
+        "ctx":       "262144",
+        "batch":     "512",
+        "ubatch":    "512",
+        "n_cpu_moe": "10",
+        "mmproj":    true
+      },
+      "fixed": [
+        "-ngl", "99",
+        "--flash-attn", "on",
+        "--jinja",
+        "--cache-type-k", "q8_0", "--cache-type-v", "q8_0",
+        "--presence-penalty", "0",
+        "--repeat-penalty", "1.0",
+        "--top-p", "0.95", "--top-k", "20", "--min-p", "0.05",
+        "--temperature", "0.6",
+        "--log-colors", "on",
+        "--chat-template-kwargs", "{\"preserve-thinking\":true}"
+      ]
+    },
+
+    {
+      "name": "Gemma 26B 128k MOE",
+      "executable": "llama-server.exe",
+      "tags": ["multimodal", "moe", "vision"],
+      "notes": [
+        "MOE model — n-cpu-moe offloads MOE layers to CPU",
+        "flash-attn disabled — crashes with this model",
+        "No MTP variant available"
+      ],
+      "models": {
+        "lmstudio Q4_K_M": {
+          "model":  "%LLAMA_MODELS%/lmstudio-community/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-Q4_K_M.gguf",
+          "mmproj": "%LLAMA_MODELS%/lmstudio-community/gemma-4-26B-A4B-it-GGUF/mmproj-gemma-4-26B-A4B-it-BF16.gguf",
+          "mtp": false
+        }
+      },
+      "tunables": {
+        "ctx":       "131072",
+        "batch":     "512",
+        "ubatch":    "512",
+        "n_cpu_moe": "8",
+        "mmproj":    true
+      },
+      "fixed": [
+        "-ngl", "99",
+        "--flash-attn", "0",
+        "--temp", "1",
+        "--top-p", "0.95", "--top-k", "64", "--min-p", "0.05"
+      ]
+    },
+
+    {
+      "name": "Gemma 31B 64k Dense",
+      "executable": "llama-server.exe",
+      "tags": ["dense", "vision"],
+      "notes": [
+        "Dense model — no MOE",
+        "flash-attn disabled — crashes with this model",
+        "Heavy on VRAM — ctx above 64k not recommended",
+        "No MTP variant available"
+      ],
+      "models": {
+        "lmstudio Q4_K_M": {
+          "model":  "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
+          "mmproj": "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/mmproj-gemma-4-31B-it-BF16.gguf",
+          "mtp": false
+        }
+      },
+      "tunables": {
+        "ctx":    "65536",
+        "batch":  "1024",
+        "ubatch": "1024",
+        "mmproj": true
+      },
+      "fixed": [
+        "-ngl", "99",
+        "--flash-attn", "0",
+        "--temp", "1",
+        "--no-mmproj-offload",
+        "--top-p", "0.95", "--top-k", "64", "--min-p", "0.05",
+        "--ctx-checkpoints", "0"
+      ]
+    },
+
+    {
+      "name": "Bench - Gemma 31B",
+      "executable": "llama-bench.exe",
+      "tags": ["benchmark"],
+      "notes": [
+        "Batch sweep: 256, 512, 1024",
+        "3 repetitions — takes a few minutes"
+      ],
+      "models": {
+        "lmstudio Q4_K_M": {
+          "model": "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
+          "mtp": false
+        }
+      },
+      "tunables": {},
+      "fixed": [
+        "-ngl", "99",
+        "-fa", "1",
+        "-b", "256,512,1024",
+        "-ub", "256,512,1024",
+        "-p", "1024",
+        "-n", "256",
+        "-r", "3"
+      ]
+    }
+  ]
+}
