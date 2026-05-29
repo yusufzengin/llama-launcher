@@ -58,12 +58,13 @@ def load_last_used():
         return None
 
 
-def save_last_used(runtime_name, profile_name, model_name):
+def save_last_used(runtime_name, profile_name, model_name, tunables=None):
     with open(LAST_USED_FILE, "w", encoding="utf-8") as f:
         json.dump({
             "runtime": runtime_name,
             "profile": profile_name,
-            "model":   model_name
+            "model":   model_name,
+            "tunables": tunables or {}
         }, f)
 
 
@@ -289,6 +290,7 @@ def main():
 
     last       = load_last_used()
     last_valid = validate_last_used(last, runtimes, profiles)
+    last_used_tunables = None
 
     while True:
         # Runtime selection
@@ -318,6 +320,7 @@ def main():
             runtime_name  = last["runtime"]
             selected_name = last["profile"]
             model_name    = last["model"]
+            last_used_tunables = last.get("tunables")
             break
 
         selected_name = selected
@@ -347,6 +350,11 @@ def main():
 
     # Tunables
     tunables = merge_tunables(defaults, profile.get("tunables", {}))
+    if last_used_tunables:
+        for k, v in last_used_tunables.items():
+            if k in tunables:
+                tunables[k] = v
+
     if model_variant.get("mtp") and "mmproj" in tunables:
         tunables["mmproj"] = False
 
@@ -376,7 +384,7 @@ def main():
         print("Aborted.")
         sys.exit(0)
 
-    save_last_used(runtime_name, selected_name, model_name)
+    save_last_used(runtime_name, selected_name, model_name, tunables)
 
     print()
     try:
@@ -388,4 +396,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nCancelled.")
+        sys.exit(0)

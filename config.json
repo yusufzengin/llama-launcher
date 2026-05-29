@@ -9,7 +9,8 @@
     "--fit", "off",
     "--no-mmap",
     "--mlock",
-    "-fitt", "512"
+    "-fitt", "128",
+    "--parallel", "1"
   ],
 
   "runtimes": {
@@ -23,9 +24,9 @@
       "executable": "llama-server.exe",
       "tags": ["reasoning", "coding", "long-context"],
       "notes": [
-        "Dense model — no MOE",
+        "Dense model",
         "MTP variant uses --spec-type draft-mtp",
-        "mmproj currently incompatible with MTP — disable vision when using MTP"
+        "mmproj currently incompatible with MTP - disable vision when using MTP"
       ],
       "models": {
         "lmstudio Q4_K_M": {
@@ -43,18 +44,25 @@
           "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
           "mtp": true,
           "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
+        },
+        "unsloth MTP IQ4_XS": {
+          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
+          "mtp": true,
+          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
         }
       },
       "tunables": {
         "ctx":    "180000",
         "batch":  "512",
         "ubatch": "512",
-        "mmproj": true
+        "mmproj": false
       },
       "fixed": [
         "-ngl", "99",
         "--flash-attn", "on",
         "--jinja",
+        "--no-mmproj-offload",
         "--cache-type-k", "q8_0", "--cache-type-v", "q8_0",
         "--presence-penalty", "0",
         "--repeat-penalty", "1",
@@ -79,12 +87,6 @@
           "model":  "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-Q4_K_M.gguf",
           "mmproj": "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-35B-A3B-GGUF/mmproj-Qwen3.6-35B-A3B-BF16.gguf",
           "mtp": false
-        },
-        "unsloth MTP Q6_K": {
-          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/Qwen3.6-35B-A3B-UD-Q6_K.gguf",
-          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/mmproj-F32.gguf",
-          "mtp": true,
-          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
         }
       },
       "tunables": {
@@ -113,9 +115,8 @@
       "executable": "llama-server.exe",
       "tags": ["multimodal", "moe", "vision"],
       "notes": [
-        "MOE model — n-cpu-moe offloads MOE layers to CPU",
-        "flash-attn disabled — crashes with this model",
-        "No MTP variant available"
+        "MOE model - n-cpu-moe offloads MOE layers to CPU",
+        "flash-attn disabled - crashes with this model"
       ],
       "models": {
         "lmstudio Q4_K_M": {
@@ -128,7 +129,7 @@
         "ctx":       "131072",
         "batch":     "512",
         "ubatch":    "512",
-        "n_cpu_moe": "8",
+        "n_cpu_moe": "10",
         "mmproj":    true
       },
       "fixed": [
@@ -144,22 +145,26 @@
       "executable": "llama-server.exe",
       "tags": ["dense", "vision"],
       "notes": [
-        "Dense model — no MOE",
-        "flash-attn disabled — crashes with this model",
-        "Heavy on VRAM — ctx above 64k not recommended",
-        "No MTP variant available"
+        "Dense model",
+        "flash-attn disabled - crashes with this model",
+        "Heavy on VRAM - ctx above 64k not recommended"
       ],
       "models": {
         "lmstudio Q4_K_M": {
           "model":  "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
           "mmproj": "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/mmproj-gemma-4-31B-it-BF16.gguf",
           "mtp": false
+        },
+        "unsloth IQ4_XS": {
+          "model":  "%LLAMA_MODELS%/unsloth/gemma-4-31B-it-GGUF/gemma-4-31B-it-IQ4_XS.gguf",
+          "mmproj": "%LLAMA_MODELS%/unsloth/gemma-4-31B-it-GGUF/mmproj-F32.gguf",
+          "mtp": false
         }
       },
       "tunables": {
         "ctx":    "65536",
-        "batch":  "1024",
-        "ubatch": "1024",
+        "batch":  "512",
+        "ubatch": "512",
         "mmproj": true
       },
       "fixed": [
