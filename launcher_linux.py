@@ -95,15 +95,7 @@ def main():
     config = load_config()
 
     # Runtime keys come from config; values are substituted from Linux env vars
-    runtime_env = {
-        "Stable": "LINUX_LLAMA_BIN_STABLE",
-        "Latest": "LINUX_LLAMA_BIN_LATEST",
-    }
-    runtimes = {
-        name: os.environ[runtime_env[name]]
-        for name in config["runtimes"]
-        if name in runtime_env
-    }
+    runtimes = {k: resolve(v["linux"]) for k, v in config["runtimes"].items()}
 
     command = run(
         config            = config,

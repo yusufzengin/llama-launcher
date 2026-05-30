@@ -14,9 +14,15 @@
   ],
 
   "runtimes": {
-    "Stable": "%LLAMA_BIN_STABLE%",
-    "Latest": "%LLAMA_BIN_LATEST%"
+  "Stable": {
+    "windows": "$LLAMA_BIN_STABLE",
+    "linux":   "$LINUX_LLAMA_BIN_STABLE"
   },
+  "Latest": {
+    "windows": "$LLAMA_BIN_LATEST",
+    "linux":   "$LINUX_LLAMA_BIN_STABLE"
+  }
+},
 
   "profiles": [
     {

@@ -60,7 +60,7 @@ def main():
     check_env_vars()
 
     config   = load_config()
-    runtimes = {k: resolve(v) for k, v in config["runtimes"].items()}
+    runtimes = {k: resolve(v["windows"]) for k, v in config["runtimes"].items()}
 
     command = run(
         config            = config,
