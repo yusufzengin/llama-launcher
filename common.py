@@ -1,6 +1,5 @@
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -25,18 +24,18 @@ TUNABLE_LABELS = {
     "mmproj":    "Vision (mmproj)",
 }
 
-REQUIRED_ENV   = ["LLAMA_MODELS", "LLAMA_BIN_STABLE", "LLAMA_BIN_LATEST"]
-BACK           = object()
-LAST_USED      = object()
+BACK      = object()
+LAST_USED = object()
 
 
-# Env / config
+# Config / persistence
 
 def load_env_file():
+    """Load a .env file next to the launcher into os.environ (non-destructive)."""
     env_file = Path(__file__).parent / ".env"
     if not env_file.exists():
         return
-    with open(env_file) as f:
+    with open(env_file, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#") or "=" not in line:
@@ -61,25 +60,11 @@ def load_last_used():
 def save_last_used(runtime_name, profile_name, model_name, tunables=None):
     with open(LAST_USED_FILE, "w", encoding="utf-8") as f:
         json.dump({
-            "runtime": runtime_name,
-            "profile": profile_name,
-            "model":   model_name,
-            "tunables": tunables or {}
-        }, f)
-
-
-def check_env_vars():
-    missing = [v for v in REQUIRED_ENV if not os.environ.get(v)]
-    if missing:
-        print("\n  Missing environment variables:")
-        for v in missing:
-            print(f"    ✗ {v}")
-        print("\n  Set them in a .env file next to launcher.py:")
-        print('    LLAMA_MODELS=D:\\path\\to\\models')
-        print('    LLAMA_BIN_STABLE=D:\\llama\\stable\\build\\bin\\Release')
-        print('    LLAMA_BIN_LATEST=D:\\llama\\latest\\build\\bin\\Release')
-        print("\n  Or set them as Windows user environment variables.")
-        sys.exit(1)
+            "runtime":  runtime_name,
+            "profile":  profile_name,
+            "model":    model_name,
+            "tunables": tunables or {},
+        }, f, indent=2)
 
 
 def validate_last_used(last, runtimes, profiles):
@@ -93,37 +78,6 @@ def validate_last_used(last, runtimes, profiles):
     if last["model"] not in matched.get("models", {}):
         return False
     return True
-
-
-# Env var resolution
-
-def resolve(value):
-    return os.path.expandvars(str(value))
-
-
-def resolve_args(args):
-    return [resolve(a) for a in args]
-
-
-# Validation
-
-def validate(runtime_path, profile, model_variant, tunables):
-    errors = []
-
-    executable = Path(resolve(runtime_path)) / profile["executable"]
-    if not executable.exists():
-        errors.append(f"Executable not found: {executable}")
-
-    model_path = resolve(model_variant["model"])
-    if not Path(model_path).exists():
-        errors.append(f"Model not found: {model_path}")
-
-    if tunables.get("mmproj") and "mmproj" in model_variant:
-        mmproj_path = resolve(model_variant["mmproj"])
-        if not Path(mmproj_path).exists():
-            errors.append(f"mmproj not found: {mmproj_path}")
-
-    return errors
 
 
 # UI helpers
@@ -153,8 +107,8 @@ def choose_option(title, options, labels=None, can_go_back=False):
 
 
 def print_profile_info(profile, model_name, model_variant):
-    tags      = profile.get("tags", [])
-    notes     = profile.get("notes", [])
+    tags  = profile.get("tags", [])
+    notes = profile.get("notes", [])
 
     if tags:
         print(f"  Tags      : {', '.join(tags)}")
@@ -238,13 +192,18 @@ def edit_tunables(tunables):
 
 # Command builder
 
-def build_args(defaults, common, tunables, fixed, model_variant, is_bench):
+def build_args(defaults, common_args, tunables, fixed, model_variant, is_bench, resolve_fn):
+    """
+    Build the final arg list.
+    resolve_fn: callable(str) -> str — platform-specific path resolver.
+    Only model/mmproj values are resolved; flag strings pass through as-is.
+    """
     args = []
 
-    args += ["-m", resolve(model_variant["model"])]
+    args.extend(["-m", resolve_fn(model_variant["model"])])
 
     if model_variant.get("mtp"):
-        args += model_variant.get("mtp_args", [])
+        args.extend(model_variant.get("mtp_args", []))
 
     for key, value in tunables.items():
         if key == "mmproj":
@@ -256,47 +215,51 @@ def build_args(defaults, common, tunables, fixed, model_variant, is_bench):
             if value:
                 args.append(flag)
         else:
-            args += [flag, str(value)]
+            args.extend([flag, str(value)])
 
     if not is_bench:
-        args += common
+        args.extend(common_args)
 
-    args += resolve_args(fixed)
+    args.extend(fixed)
 
     if not is_bench and tunables.get("mmproj") and "mmproj" in model_variant:
-        args += ["--mmproj", resolve(model_variant["mmproj"])]
+        args.extend(["--mmproj", resolve_fn(model_variant["mmproj"])])
 
     if not is_bench:
-        args += ["--host", defaults.get("host", "0.0.0.0")]
-        args += ["--port", defaults.get("port", "8080")]
+        args.extend(["--host", defaults.get("host", "0.0.0.0")])
+        args.extend(["--port", defaults.get("port", "8080")])
 
     if not is_bench and "threads" not in tunables:
-        args += ["--threads", defaults.get("threads", "14")]
+        args.extend(["--threads", defaults.get("threads", "14")])
 
     return args
 
 
-# Main
+# Main flow (platform-agnostic orchestration)
 
-def main():
-    load_env_file()
-    check_env_vars()
+def run(config, runtimes, resolve_fn, get_executable_fn, validate_fn):
+    """
+    Shared main loop.
 
-    config   = load_config()
-    defaults = config.get("defaults", {})
-    common   = config.get("common", [])
-    runtimes = {k: resolve(v) for k, v in config["runtimes"].items()}
-    profiles = config["profiles"]
+    Callers provide:
+      config            - loaded config dict
+      runtimes          - dict of {name: resolved_binary_dir_str}
+      resolve_fn        - callable(str) -> str   resolves model/mmproj paths
+      get_executable_fn - callable(runtime_path, profile) -> str
+      validate_fn       - callable(executable, profile, model_variant, tunables) -> [errors]
+    """
+    defaults    = config.get("defaults", {})
+    common_args = config.get("common", [])
+    profiles    = config["profiles"]
 
     last       = load_last_used()
     last_valid = validate_last_used(last, runtimes, profiles)
-    last_used_tunables = None
 
     while True:
         # Runtime selection
         runtime_name = choose_option("Runtime", list(runtimes.keys()), can_go_back=False)
 
-        # Profile list — pin last used as item 1 if valid and matches runtime
+        # Profile selection
         profile_names  = [p["name"] for p in profiles]
         profile_labels = [
             f"{p['name']}  [{', '.join(p.get('tags', []))}]"
@@ -304,22 +267,22 @@ def main():
         ]
 
         if last_valid and last["runtime"] == runtime_name:
-            option_values  = [LAST_USED]  + profile_names
-            option_labels  = [f"★ {last['profile']}  [{last['model']}]  ← last used"] + profile_labels
+            option_values = [LAST_USED] + profile_names
+            option_labels = [f"★ {last['profile']}  [{last['model']}]  ← last used"] + profile_labels
         else:
-            option_values  = profile_names
-            option_labels  = profile_labels
+            option_values = profile_names
+            option_labels = profile_labels
 
         selected = choose_option("Profile", option_values, labels=option_labels, can_go_back=True)
 
         if selected is BACK:
             continue
 
-        # Last used shortcut — skip model variant step
+        # Last-used shortcut
         if selected is LAST_USED:
-            runtime_name  = last["runtime"]
-            selected_name = last["profile"]
-            model_name    = last["model"]
+            runtime_name       = last["runtime"]
+            selected_name      = last["profile"]
+            model_name         = last["model"]
             last_used_tunables = last.get("tunables")
             break
 
@@ -331,19 +294,19 @@ def main():
         if chosen is BACK:
             continue
 
-        model_name = chosen
+        model_name         = chosen
+        last_used_tunables = None
         break
 
     runtime_path  = runtimes[runtime_name]
     profile       = next(p for p in profiles if p["name"] == selected_name)
     model_variant = profile["models"][model_name]
-    is_bench      = profile["executable"] == "llama-bench.exe"
+    is_bench      = profile["executable"] in ("llama-bench.exe", "llama-bench")
 
     # Profile info
     print(f"\n  {profile['name']}")
     print_profile_info(profile, model_name, model_variant)
 
-    # MTP + mmproj warning
     if model_variant.get("mtp"):
         print("\n  ⚠  MTP model selected — mmproj (vision) is currently incompatible with MTP.")
         print("     mmproj will be suppressed automatically.")
@@ -359,7 +322,8 @@ def main():
         tunables["mmproj"] = False
 
     # Validation
-    errors = validate(runtime_path, profile, model_variant, tunables)
+    executable = get_executable_fn(runtime_path, profile)
+    errors     = validate_fn(executable, profile, model_variant, tunables)
     if errors:
         print("\n  Validation errors:")
         for e in errors:
@@ -373,9 +337,13 @@ def main():
             tunables = edit_tunables(tunables)
 
     # Build and preview
-    executable = str(Path(runtime_path) / profile["executable"])
-    final_args = build_args(defaults, common, tunables, profile.get("fixed", []), model_variant, is_bench)
+    final_args = build_args(defaults, common_args, tunables, profile.get("fixed", []), model_variant, is_bench, resolve_fn)
     command    = [executable] + final_args
+
+    print("\n--- Launch Summary ---\n")
+    print(f"  Runtime : {runtime_name}")
+    print(f"  Profile : {profile['name']}")
+    print(f"  Model   : {model_name}")
 
     print_command_preview(command)
 
@@ -386,18 +354,4 @@ def main():
 
     save_last_used(runtime_name, selected_name, model_name, tunables)
 
-    print()
-    try:
-        subprocess.run(command)
-    except Exception as e:
-        print(f"\nError: {e}")
-
-    input("\nPress Enter to exit...")
-
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nCancelled.")
-        sys.exit(0)
+    return command

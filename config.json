@@ -30,26 +30,26 @@
       ],
       "models": {
         "lmstudio Q4_K_M": {
-          "model":  "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf",
-          "mmproj": "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-27B-GGUF/mmproj-Qwen3.6-27B-BF16.gguf",
+          "model":  "$LLAMA_MODELS/lmstudio-community/Qwen3.6-27B-GGUF/Qwen3.6-27B-Q4_K_M.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/Qwen3.6-27B-GGUF/mmproj-Qwen3.6-27B-BF16.gguf",
           "mtp": false
         },
         "unsloth Q5_K_XL": {
-          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-Q5_K_XL.gguf",
-          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-GGUF/mmproj-F32.gguf",
+          "model":  "$LLAMA_MODELS/unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-Q5_K_XL.gguf",
+          "mmproj": "$LLAMA_MODELS/unsloth/Qwen3.6-27B-GGUF/mmproj-F32.gguf",
           "mtp": false
         },
         "unsloth MTP Q4_K_M": {
-          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-Q4_K_M.gguf",
-          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
+          "model":  "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-Q4_K_M.gguf",
+          "mmproj": "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
           "mtp": true,
-          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
+          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "3"]
         },
         "unsloth MTP IQ4_XS": {
-          "model":  "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
-          "mmproj": "%LLAMA_MODELS%/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
+          "model":  "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+          "mmproj": "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
           "mtp": true,
-          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "2"]
+          "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "3"]
         }
       },
       "tunables": {
@@ -84,8 +84,8 @@
       ],
       "models": {
         "lmstudio Q4_K_M": {
-          "model":  "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-Q4_K_M.gguf",
-          "mmproj": "%LLAMA_MODELS%/lmstudio-community/Qwen3.6-35B-A3B-GGUF/mmproj-Qwen3.6-35B-A3B-BF16.gguf",
+          "model":  "$LLAMA_MODELS/lmstudio-community/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-Q4_K_M.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/Qwen3.6-35B-A3B-GGUF/mmproj-Qwen3.6-35B-A3B-BF16.gguf",
           "mtp": false
         }
       },
@@ -120,8 +120,8 @@
       ],
       "models": {
         "lmstudio Q4_K_M": {
-          "model":  "%LLAMA_MODELS%/lmstudio-community/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-Q4_K_M.gguf",
-          "mmproj": "%LLAMA_MODELS%/lmstudio-community/gemma-4-26B-A4B-it-GGUF/mmproj-gemma-4-26B-A4B-it-BF16.gguf",
+          "model":  "$LLAMA_MODELS/lmstudio-community/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-Q4_K_M.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-26B-A4B-it-GGUF/mmproj-gemma-4-26B-A4B-it-BF16.gguf",
           "mtp": false
         }
       },
@@ -151,13 +151,13 @@
       ],
       "models": {
         "lmstudio Q4_K_M": {
-          "model":  "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
-          "mmproj": "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/mmproj-gemma-4-31B-it-BF16.gguf",
+          "model":  "$LLAMA_MODELS/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-31B-it-GGUF/mmproj-gemma-4-31B-it-BF16.gguf",
           "mtp": false
         },
         "unsloth IQ4_XS": {
-          "model":  "%LLAMA_MODELS%/unsloth/gemma-4-31B-it-GGUF/gemma-4-31B-it-IQ4_XS.gguf",
-          "mmproj": "%LLAMA_MODELS%/unsloth/gemma-4-31B-it-GGUF/mmproj-F32.gguf",
+          "model":  "$LLAMA_MODELS/unsloth/gemma-4-31B-it-GGUF/gemma-4-31B-it-IQ4_XS.gguf",
+          "mmproj": "$LLAMA_MODELS/unsloth/gemma-4-31B-it-GGUF/mmproj-F32.gguf",
           "mtp": false
         }
       },
@@ -187,7 +187,7 @@
       ],
       "models": {
         "lmstudio Q4_K_M": {
-          "model": "%LLAMA_MODELS%/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
+          "model": "$LLAMA_MODELS/lmstudio-community/gemma-4-31B-it-GGUF/gemma-4-31B-it-Q4_K_M.gguf",
           "mtp": false
         }
       },
