@@ -6,11 +6,12 @@
   },
 
   "common": [
-    "--fit", "off",
+    "--fit", "on",
     "--no-mmap",
     "--mlock",
-    "-fitt", "128",
-    "--parallel", "1"
+    "--parallel", "1",
+    "--metrics",
+    "--kv-unified"
   ],
 
   "runtimes": {
@@ -26,7 +27,7 @@
 
   "profiles": [
     {
-      "name": "Qwen 27B 180k",
+      "name": "Qwen 27B 120k",
       "executable": "llama-server.exe",
       "tags": ["reasoning", "coding", "long-context"],
       "notes": [
@@ -51,6 +52,12 @@
           "mtp": true,
           "mtp_args": ["--spec-type", "draft-mtp", "--spec-draft-n-max", "3"]
         },
+        "unsloth MTP Q4_K_XL": {
+          "model":  "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-UD-Q4_K_XL.gguf",
+          "mmproj": "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
+          "mtp": true,
+          "mtp_args": ["--spec-type", "draft-mtp,ngram-mod", "--spec-draft-n-max", "3", "--spec-ngram-mod-n-match", "24", "--spec-ngram-mod-n-min", "12", "--spec-ngram-mod-n-max", "48"]
+        },
         "unsloth MTP IQ4_XS": {
           "model":  "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
           "mmproj": "$LLAMA_MODELS/unsloth/Qwen3.6-27B-MTP-GGUF/mmproj-F32.gguf",
@@ -59,7 +66,7 @@
         }
       },
       "tunables": {
-        "ctx":    "180000",
+        "ctx":    "120000",
         "batch":  "512",
         "ubatch": "512",
         "mmproj": false
@@ -75,7 +82,8 @@
         "--temperature", "0.6",
         "--top-p", "0.95", "--top-k", "20", "--min-p", "0.05",
         "--log-colors", "on",
-        "--chat-template-kwargs", "{\"preserve-thinking\":true}"
+        "--chat-template-kwargs", "{\"preserve-thinking\":true}",
+        "--ctx-checkpoints", "256"
       ]
     },
 
@@ -93,6 +101,12 @@
           "model":  "$LLAMA_MODELS/lmstudio-community/Qwen3.6-35B-A3B-GGUF/Qwen3.6-35B-A3B-Q4_K_M.gguf",
           "mmproj": "$LLAMA_MODELS/lmstudio-community/Qwen3.6-35B-A3B-GGUF/mmproj-Qwen3.6-35B-A3B-BF16.gguf",
           "mtp": false
+        },
+        "unsloth Q5_K_XL MTP": {
+          "model":  "$LLAMA_MODELS/unsloth/Qwen3.6-35B-A3B-MTP-GGUF/Qwen3.6-35B-A3B-UD-Q5_K_XL.gguf",
+          "mmproj": "$LLAMA_MODELS/unsloth/Qwen3.6-35B-A3B-GGUF/mmproj-F32.gguf",
+          "mtp": true,
+          "mtp_args": ["--spec-type", "draft-mtp,ngram-mod", "--spec-draft-n-max", "3", "--spec-ngram-mod-n-match", "24", "--spec-ngram-mod-n-min", "48", "--spec-ngram-mod-n-max", "64"]
         }
       },
       "tunables": {
@@ -100,7 +114,7 @@
         "batch":     "512",
         "ubatch":    "512",
         "n_cpu_moe": "10",
-        "mmproj":    true
+        "mmproj":    false
       },
       "fixed": [
         "-ngl", "99",
@@ -128,6 +142,11 @@
         "lmstudio Q4_K_M": {
           "model":  "$LLAMA_MODELS/lmstudio-community/gemma-4-26B-A4B-it-GGUF/gemma-4-26B-A4B-it-Q4_K_M.gguf",
           "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-26B-A4B-it-GGUF/mmproj-gemma-4-26B-A4B-it-BF16.gguf",
+          "mtp": false
+        },
+        "lmstudio Q4_0 QAT": {
+          "model":  "$LLAMA_MODELS/lmstudio-community/gemma-4-26B-A4B-it-QAT-GGUF/gemma-4-26B-A4B-it-QAT-Q4_0.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-26B-A4B-it-QAT-GGUF/mmproj-gemma-4-26B-A4B-it-QAT-BF16.gguf",
           "mtp": false
         }
       },
@@ -161,17 +180,17 @@
           "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-31B-it-GGUF/mmproj-gemma-4-31B-it-BF16.gguf",
           "mtp": false
         },
-        "unsloth IQ4_XS": {
-          "model":  "$LLAMA_MODELS/unsloth/gemma-4-31B-it-GGUF/gemma-4-31B-it-IQ4_XS.gguf",
-          "mmproj": "$LLAMA_MODELS/unsloth/gemma-4-31B-it-GGUF/mmproj-F32.gguf",
+        "lmstudio Q4_0 QAT": {
+          "model":  "$LLAMA_MODELS/lmstudio-community/gemma-4-31B-it-QAT-GGUF/gemma-4-31B-it-QAT-Q4_0.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-31B-it-QAT-GGUF/mmproj-gemma-4-31B-it-QAT-BF16.gguf",
           "mtp": false
         }
       },
       "tunables": {
-        "ctx":    "65536",
+        "ctx":    "28000",
         "batch":  "512",
         "ubatch": "512",
-        "mmproj": true
+        "mmproj": false
       },
       "fixed": [
         "-ngl", "99",
@@ -179,10 +198,39 @@
         "--temp", "1",
         "--no-mmproj-offload",
         "--top-p", "0.95", "--top-k", "64", "--min-p", "0.05",
-        "--ctx-checkpoints", "0"
+        "--ctx-checkpoints", "256"
       ]
     },
-
+    {
+      "name": "Gemma 12B 256k Dense",
+      "executable": "llama-server.exe",
+      "tags": ["dense", "vision", "audio"],
+      "notes": [
+        "Dense model",
+        "flash-attn disabled - crashes with this model"
+      ],
+      "models": {
+        "lmstudio Q8_0": {
+          "model":  "$LLAMA_MODELS/lmstudio-community/gemma-4-12B-it-GGUF/gemma-4-12B-it-Q8_0.gguf",
+          "mmproj": "$LLAMA_MODELS/lmstudio-community/gemma-4-12B-it-GGUF/mmproj-gemma-4-12B-it-BF16.gguf",
+          "mtp": false
+        }
+      },
+      "tunables": {
+        "ctx":    "131072",
+        "batch":  "1024",
+        "ubatch": "512",
+        "mmproj": false
+      },
+      "fixed": [
+        "-ngl", "99",
+        "--flash-attn", "0",
+        "--temp", "1",
+        "--no-mmproj-offload",
+        "--top-p", "0.95", "--top-k", "64", "--min-p", "0.05",
+        "--ctx-checkpoints", "64"
+      ]
+    },
     {
       "name": "Bench - Gemma 31B",
       "executable": "llama-bench.exe",
