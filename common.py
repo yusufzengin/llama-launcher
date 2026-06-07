@@ -12,6 +12,8 @@ TUNABLE_FLAGS = {
     "ubatch":    "--ubatch-size",
     "threads":   "--threads",
     "n_cpu_moe": "--n-cpu-moe",
+    "cache_type_k": "--cache-type-k",
+    "cache_type_v": "--cache-type-v",
     "mmproj":    None,  # handled separately
 }
 
@@ -21,7 +23,14 @@ TUNABLE_LABELS = {
     "ubatch":    "Ubatch size",
     "threads":   "Threads",
     "n_cpu_moe": "CPU MOE layers",
+    "cache_type_k": "KV cache type (K)",
+    "cache_type_v": "KV cache type (V)",
     "mmproj":    "Vision (mmproj)",
+}
+
+TUNABLE_ENUMS = {
+    "cache_type_k": ["f16", "bf16", "q8_0", "q5_1", "q5_0", "q4_1", "q4_0", "iq4_nl"],
+    "cache_type_v": ["f16", "bf16", "q8_0", "q5_1", "q5_0", "q4_1", "q4_0", "iq4_nl"],
 }
 
 BACK      = object()
@@ -139,10 +148,12 @@ def print_command_preview(command):
 
 # Tunables
 
-def merge_tunables(defaults, profile_tunables):
+def merge_tunables(defaults, profile_tunables, model_tunables= None):
     merged = {}
     for key in TUNABLE_FLAGS:
-        if key in profile_tunables:
+        if model_tunables and key in model_tunables:
+            merged[key] = model_tunables[key]
+        elif key in profile_tunables:
             merged[key] = profile_tunables[key]
         elif key in defaults:
             merged[key] = defaults[key]
@@ -162,14 +173,14 @@ def edit_tunables(tunables):
 
     while True:
         display_tunables(tunables)
-        print(f"\n  {len(keys) + 1}. Done")
+        print(f"\n  0. Done")
 
         choice = input("\nEdit which? ").strip()
         if not choice.isdigit():
             print("Please enter a number.")
             continue
         choice = int(choice)
-        if choice == len(keys) + 1:
+        if choice == 0:
             break
         if not (1 <= choice <= len(keys)):
             print("Invalid selection.")
@@ -182,11 +193,22 @@ def edit_tunables(tunables):
         if isinstance(current, bool):
             tunables[key] = not current
             print(f"  {label} → {tunables[key]}")
+        elif key in TUNABLE_ENUMS:
+            options = TUNABLE_ENUMS[key]
+            print(f"\n  {label} [{current}]:")
+            print(f"    0. Keep current")
+            for i, opt in enumerate(options, start=1):
+                marker = " ←" if opt == current else ""
+                print(f"    {i}. {opt}{marker}")
+            choice = input("  Select: ").strip()
+            if choice.isdigit():
+                idx = int(choice)
+                if 1 <= idx <= len(options):
+                    tunables[key] = options[idx - 1] 
         else:
             new_val = input(f"  {label} [{current}]: ").strip()
             if new_val:
                 tunables[key] = new_val
-
     return tunables
 
 
@@ -312,7 +334,7 @@ def run(config, runtimes, resolve_fn, get_executable_fn, validate_fn):
         print("     mmproj will be suppressed automatically.")
 
     # Tunables
-    tunables = merge_tunables(defaults, profile.get("tunables", {}))
+    tunables = merge_tunables(defaults, profile.get("tunables", {}), model_variant.get("tunables"))
     if last_used_tunables:
         for k, v in last_used_tunables.items():
             if k in tunables:
